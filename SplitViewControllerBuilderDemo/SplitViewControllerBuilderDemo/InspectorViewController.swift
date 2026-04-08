@@ -30,7 +30,6 @@ class InspectorViewController: NSViewController {
 
 		setupStackView()
 		setupPlaceholderLabel()
-
 		showPlaceholder(true)
 	}
 
@@ -43,7 +42,7 @@ class InspectorViewController: NSViewController {
 		stackView.alignment = .leading
 		stackView.spacing = 6
 		stackView.translatesAutoresizingMaskIntoConstraints = false
-		stackView.edgeInsets = NSEdgeInsets(top: 12, left: 16, bottom: 12, right: 16)
+		stackView.edgeInsets = NSEdgeInsets(top: 12, left: 20, bottom: 20, right: 20)
 
 		// フリップされたNSViewをdocumentViewに使い、
 		// スタックビューを上端寄せにする
@@ -67,7 +66,7 @@ class InspectorViewController: NSViewController {
 		view.addSubview(scrollView)
 
 		NSLayoutConstraint.activate([
-			scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+			scrollView.topAnchor.constraint(equalTo: view.topAnchor),
 			scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 			scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
 			scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
@@ -131,11 +130,11 @@ class InspectorViewController: NSViewController {
 	}
 
 
-	// MARK: - UI Parts
+	// MARK: -
 
 	private func addSectionHeader(_ title: String) {
 		let label = NSTextField(labelWithString: title)
-		label.font = .systemFont(ofSize: 11, weight: .semibold)
+		label.font = .systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
 		label.textColor = .secondaryLabelColor
 		stackView.addArrangedSubview(label)
 
@@ -147,15 +146,15 @@ class InspectorViewController: NSViewController {
 
 	private func addPropertyRow(label: String, value: String) {
 		let labelField = NSTextField(labelWithString: "\(label):")
-		labelField.font = .systemFont(ofSize: 12)
+		labelField.font = .systemFont(ofSize: NSFont.systemFontSize)
 		labelField.textColor = .secondaryLabelColor
 		labelField.alignment = .right
 		labelField.translatesAutoresizingMaskIntoConstraints = false
-		labelField.widthAnchor.constraint(equalToConstant: 72).isActive = true
+		labelField.widthAnchor.constraint(equalToConstant: 80).isActive = true
 		labelField.setContentHuggingPriority(.required, for: .horizontal)
 
 		let valueField = NSTextField(labelWithString: value)
-		valueField.font = .systemFont(ofSize: 12)
+		valueField.font = .systemFont(ofSize: NSFont.systemFontSize)
 		valueField.textColor = .labelColor
 		valueField.lineBreakMode = .byWordWrapping
 		valueField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -184,7 +183,6 @@ class InspectorViewController: NSViewController {
 
 
 // MARK: - FlippedView
-// スクロールビュー内でコンテンツを上端寄せにするためのヘルパー
 
 private class FlippedView: NSView {
 	override var isFlipped: Bool { true }

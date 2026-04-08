@@ -7,18 +7,18 @@
 
 import Cocoa
 
-class SplitViewItem: NSSplitViewItem {
+open class SplitViewItem: NSSplitViewItem {
 	
-	static let defaultDuration: TimeInterval = 0.45
+	public static let defaultDuration: TimeInterval = 0.45
 	
-	static func easeOutQuintAnimation(duration: TimeInterval?) -> CABasicAnimation {
+	public static func easeOutQuintAnimation(duration: TimeInterval?) -> CABasicAnimation {
 		let anim = CABasicAnimation()
 		anim.duration = duration ?? defaultDuration
 		anim.timingFunction = CAMediaTimingFunction.easeOutQuint()
 		return anim
 	}
 	
-	override class func defaultAnimation(forKey key: NSAnimatablePropertyKey) -> Any? {
+	open override class func defaultAnimation(forKey key: NSAnimatablePropertyKey) -> Any? {
 		if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
 			return nil
 		}
@@ -34,7 +34,7 @@ class SplitViewItem: NSSplitViewItem {
 	
 }
 
-extension NSSplitViewItem {
+public extension NSSplitViewItem {
 	
 	@discardableResult
 	func toggleCollapsed(animated: Bool) -> Bool {

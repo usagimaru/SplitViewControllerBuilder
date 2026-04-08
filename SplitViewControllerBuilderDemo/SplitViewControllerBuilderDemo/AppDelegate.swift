@@ -15,51 +15,50 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 	private var windowController: NSWindowController?
 	private var toolbarController: ToolbarController?
+	private var splitViewController: SplitViewController?
 
 	private var sidebarVC: SidebarViewController?
-	private var contentListVC: ContentListViewController?
+	private var secondaryListVC: ContentListViewController?
 	private var detailVC: DetailViewController?
 	private var inspectorVC: InspectorViewController?
 
 	func applicationDidFinishLaunching(_ aNotification: Notification) {
+		// ---------------------------------------------
+		// Setup split view controller with custom panes
+		
+		let splitViewController = SplitViewController()
+
 		let sidebarVC = SidebarViewController()
 		sidebarVC.delegate = self
 		self.sidebarVC = sidebarVC
+		splitViewController.addSidebar(sidebarVC)
 
 		let contentListVC = ContentListViewController()
 		contentListVC.delegate = self
-		self.contentListVC = contentListVC
+		self.secondaryListVC = contentListVC
+		splitViewController.addContentList(contentListVC)
 
 		let detailVC = DetailViewController()
 		self.detailVC = detailVC
+		splitViewController.addContentArea(detailVC)
 
 		let inspectorVC = InspectorViewController()
 		self.inspectorVC = inspectorVC
+		splitViewController.addInspector(inspectorVC)
 
-		let splitViewController = SplitViewController(
-			primaryLeadingAreaBuilder: {
-				return (.primarySidebar, sidebarVC)
-			},
-			secondaryLeadingAreaBuilder: {
-				return (.contentList, contentListVC)
-			},
-			contentAreaBuilder: {
-				return [detailVC]
-			},
-			trailingAreaBuilder: {
-				return (.inspector, inspectorVC)
-			})
+		self.splitViewController = splitViewController
+		// ---------------------------------------------
 
-		// ツールバー
-		let toolbarCtrl = ToolbarController()
-		toolbarCtrl.splitView = splitViewController.splitView
-		self.toolbarController = toolbarCtrl
+		// Toolbar
+		let toolbarController = ToolbarController()
+		toolbarController.splitView = splitViewController.splitView
+		self.toolbarController = toolbarController
 
 		let toolbar = NSToolbar(identifier: ToolbarController.toolbarIdentifier)
-		toolbar.delegate = toolbarCtrl
+		toolbar.delegate = toolbarController
 		toolbar.displayMode = .iconOnly
 
-		// ウインドウ
+		// Window
 		let wc = NSWindowController(window: window)
 		wc.contentViewController = splitViewController
 		windowController = wc
@@ -67,17 +66,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 		window.styleMask.insert(.fullSizeContentView)
 		window.toolbar = toolbar
 		window.toolbarStyle = .unified
-		window.setContentSize(NSSize(width: 1000, height: 600))
+		window.setContentSize(NSSize(width: 1200, height: 800))
 
 		wc.showWindow(nil)
-	}
-
-	func applicationWillTerminate(_ aNotification: Notification) {
 	}
 
 	func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
 		return true
 	}
+	
 }
 
 
@@ -88,7 +85,7 @@ extension AppDelegate: SidebarViewControllerDelegate {
 	func sidebarViewController(_ viewController: SidebarViewController,
 							   didSelectCategory category: SidebarNode?)
 	{
-		contentListVC?.updateForCategory(category)
+		secondaryListVC?.updateForCategory(category)
 		detailVC?.updateForMessage(nil)
 		inspectorVC?.updateForMessage(nil)
 	}

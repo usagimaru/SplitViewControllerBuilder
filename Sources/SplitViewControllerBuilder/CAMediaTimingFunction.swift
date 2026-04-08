@@ -6,7 +6,7 @@
 
 import QuartzCore
 
-extension CAMediaTimingFunction {
+public extension CAMediaTimingFunction {
 	
 	static func easeInQuint() -> CAMediaTimingFunction {
 		return CAMediaTimingFunction(controlPoints: 0.64, 0, 0.78, 0)

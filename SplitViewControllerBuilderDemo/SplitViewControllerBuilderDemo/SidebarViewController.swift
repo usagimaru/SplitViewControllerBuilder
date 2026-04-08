@@ -42,6 +42,7 @@ class SidebarViewController: NSViewController {
 		outlineView.addTableColumn(column)
 		outlineView.outlineTableColumn = column
 		outlineView.style = .sourceList
+		outlineView.floatsGroupRows = false
 		outlineView.headerView = nil
 		outlineView.dataSource = self
 		outlineView.delegate = self
@@ -57,7 +58,7 @@ class SidebarViewController: NSViewController {
 		view.addSubview(scrollView)
 		scrollView.translatesAutoresizingMaskIntoConstraints = false
 		NSLayoutConstraint.activate([
-			scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+			scrollView.topAnchor.constraint(equalTo: view.topAnchor),
 			scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
 			scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
 			scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),

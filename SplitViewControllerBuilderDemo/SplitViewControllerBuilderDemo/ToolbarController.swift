@@ -5,6 +5,10 @@
 
 import Cocoa
 
+extension NSToolbarItem.Identifier {
+	static let contentListTrackingSeparator = NSToolbarItem.Identifier("ContentListTrackingSeparator")
+}
+
 class ToolbarController: NSObject, NSToolbarDelegate {
 
 	static let toolbarIdentifier = NSToolbar.Identifier("MainToolbar")
@@ -21,22 +25,28 @@ class ToolbarController: NSObject, NSToolbarDelegate {
 		switch itemIdentifier {
 			case .toggleSidebar:
 				return NSToolbarItem(itemIdentifier: itemIdentifier)
-				
+
 			case .sidebarTrackingSeparator:
 				guard let splitView else { return nil }
 				return NSTrackingSeparatorToolbarItem(identifier: itemIdentifier,
 													  splitView: splitView,
 													  dividerIndex: 0)
-				
+
+			case .contentListTrackingSeparator:
+				guard let splitView, splitView.arrangedSubviews.count >= 3 else { return nil }
+				return NSTrackingSeparatorToolbarItem(identifier: itemIdentifier,
+													  splitView: splitView,
+													  dividerIndex: 1)
+
 			case .inspectorTrackingSeparator:
 				guard let splitView, splitView.arrangedSubviews.count >= 2 else { return nil }
 				return NSTrackingSeparatorToolbarItem(identifier: itemIdentifier,
 													  splitView: splitView,
 													  dividerIndex: splitView.arrangedSubviews.count - 2)
-				
+
 			case .toggleInspector:
 				return NSToolbarItem(itemIdentifier: itemIdentifier)
-				
+
 			default:
 				return nil
 		}
@@ -46,6 +56,7 @@ class ToolbarController: NSObject, NSToolbarDelegate {
 		[
 			.toggleSidebar,
 			.sidebarTrackingSeparator,
+			.contentListTrackingSeparator,
 			.flexibleSpace,
 			.inspectorTrackingSeparator,
 			.flexibleSpace,
@@ -58,6 +69,12 @@ class ToolbarController: NSObject, NSToolbarDelegate {
 	}
 
 	func toolbarImmovableItemIdentifiers(_ toolbar: NSToolbar) -> Set<NSToolbarItem.Identifier> {
-		[.toggleSidebar, .sidebarTrackingSeparator, .inspectorTrackingSeparator, .toggleInspector]
+		[
+			.toggleSidebar,
+			.sidebarTrackingSeparator,
+			.contentListTrackingSeparator,
+			.inspectorTrackingSeparator,
+			.toggleInspector,
+		]
 	}
 }

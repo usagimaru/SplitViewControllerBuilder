@@ -7,81 +7,92 @@
 
 import Cocoa
 
-public class SplitViewController: NSSplitViewController {
+open class SplitViewController: NSSplitViewController {
 
 	public struct SplitItemInfo<T: NSViewController> {
-		let itemIndex: Int
-		let item: NSSplitViewItem
-		let viewController: T
+		public let itemIndex: Int
+		public let item: NSSplitViewItem
+		public let viewController: T
 	}
 	
-	public enum ItemType {
-		case standard
-		case primarySidebar
-		case contentList
-		case inspector
-
-		var behavior: NSSplitViewItem.Behavior {
-			switch self {
-				case .standard:
-					return .default
-				case .primarySidebar:
-					return .sidebar
-				case .contentList:
-					return .contentList
-				case .inspector:
-					return .inspector
-			}
-		}
+	/// NSSplitViewのクラス
+	open var splitViewClass: NSSplitView.Type {
+		SplitView.self
+	}
+	
+	/// NSSplitViewItemのクラス
+	open var splitViewItemClass: NSSplitViewItem.Type {
+		SplitViewItem.self
 	}
 	
 	
 	// MARK: -
+
+	public override init(nibName nibNameOrNil: NSNib.Name?, bundle nibBundleOrNil: Bundle?) {
+		super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+		splitView = configureSplitView()
+	}
+
+	public required init?(coder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
 	
-	public convenience init(splitView: NSSplitView = SplitView(),
-							primaryLeadingAreaBuilder: () -> (ItemType, NSViewController)?,
-							secondaryLeadingAreaBuilder: () -> (ItemType, NSViewController)?,
-							contentAreaBuilder: () -> [NSViewController]?,
-							trailingAreaBuilder: () -> (ItemType, NSViewController)?)
-	{
-		self.init()
-		self.splitView = splitView
+	open func configureSplitView() -> NSSplitView {
+		let splitViewClass = self.splitViewClass
+		
+		let splitView = splitViewClass.init()
 		splitView.isVertical = true
 		splitView.dividerStyle = .thin
-
-		// Primary leading area（Sidebar等）
-		if let (itemType, vc) = primaryLeadingAreaBuilder() {
-			let item = makeSplitViewItem(itemType, viewController: vc)
+		
+		return splitView
+	}
+	
+	@discardableResult
+	public func addSidebar(_ viewController: NSViewController) -> NSSplitViewItem {
+		let item = makeSplitViewItem(viewController: viewController, behavior: .sidebar)
+		insertSplitViewItem(item, at: 0)
+		return item
+	}
+	
+	@discardableResult
+	public func addContentList(_ viewController: NSViewController) -> NSSplitViewItem {
+		let item = makeSplitViewItem(viewController: viewController, behavior: .contentList)
+		if splitViewItems.first?.behavior == .sidebar {
+			insertSplitViewItem(item, at: 1)
+		}
+		else {
+			insertSplitViewItem(item, at: 0)
+		}
+		return item
+	}
+	
+	@discardableResult
+	public func addInspector(_ viewController: NSViewController) -> NSSplitViewItem {
+		let item = makeSplitViewItem(viewController: viewController, behavior: .inspector)
+		addSplitViewItem(item)
+		return item
+	}
+	
+	@discardableResult
+	public func addContentArea(_ viewController: NSViewController, behavior: NSSplitViewItem.Behavior = .default) -> NSSplitViewItem {
+		let item = makeSplitViewItem(viewController: viewController, behavior: behavior)
+		// inspectorが末尾にある場合はその手前、なければ末尾に追加
+		if splitViewItems.last?.behavior == .inspector {
+			insertSplitViewItem(item, at: splitViewItems.count - 1)
+		}
+		else {
 			addSplitViewItem(item)
 		}
-
-		// Secondary leading area（ContentList等）
-		if let (itemType, vc) = secondaryLeadingAreaBuilder() {
-			let item = makeSplitViewItem(itemType, viewController: vc)
-			addSplitViewItem(item)
-		}
-
-		// Content area
-		if let contentVCs = contentAreaBuilder() {
-			for vc in contentVCs {
-				let item = NSSplitViewItem(viewController: vc)
-				addSplitViewItem(item)
-			}
-		}
-
-		// Trailing area（Inspector等）
-		if let (itemType, vc) = trailingAreaBuilder() {
-			let item = makeSplitViewItem(itemType, viewController: vc)
-			addSplitViewItem(item)
-		}
+		return item
 	}
 
 	/// ItemTypeに応じたNSSplitViewItemを生成
-	private func makeSplitViewItem(_ itemType: ItemType, viewController: NSViewController) -> SplitViewItem
-	{
-		switch itemType {
-			case .primarySidebar:
-				let item = SplitViewItem(sidebarWithViewController: viewController)
+	open func makeSplitViewItem(viewController: NSViewController, behavior: NSSplitViewItem.Behavior) -> NSSplitViewItem {
+		let itemClass = self.splitViewItemClass
+		
+		switch behavior {
+			case .sidebar:
+				let item = itemClass.init(sidebarWithViewController: viewController)
 				item.allowsFullHeightLayout = true
 				item.minimumThickness = 300
 				if #available(macOS 26.0, *) {
@@ -90,25 +101,25 @@ public class SplitViewController: NSSplitViewController {
 				return item
 
 			case .contentList:
-				let item = SplitViewItem(contentListWithViewController: viewController)
-				item.minimumThickness = 300
-				item.canCollapse = true
+				let item = itemClass.init(contentListWithViewController: viewController)
+				item.allowsFullHeightLayout = true
+				item.minimumThickness = 280
+				item.canCollapse = false
 				if #available(macOS 26.0, *) {
 					item.automaticallyAdjustsSafeAreaInsets = true
 				}
 				return item
 
 			case .inspector:
-				let item = SplitViewItem(inspectorWithViewController: viewController)
+				let item = itemClass.init(inspectorWithViewController: viewController)
 				item.allowsFullHeightLayout = true
 				if #available(macOS 26.0, *) {
 					item.automaticallyAdjustsSafeAreaInsets = true
 				}
 				return item
 
-			case .standard:
-				let item = SplitViewItem(viewController: viewController)
-				item.holdingPriority = .defaultLow
+			default:
+				let item = itemClass.init(viewController: viewController)
 				return item
 		}
 	}
@@ -117,13 +128,13 @@ public class SplitViewController: NSSplitViewController {
 	// MARK: - Item Accessor
 
 	/// 指定したItemTypeに一致するSplitViewItemを返す
-	public func splitViewItems(for itemType: ItemType) -> [NSSplitViewItem] {
-		splitViewItems.filter { $0.behavior == itemType.behavior }
+	public func splitViewItems(for behavior: NSSplitViewItem.Behavior) -> [NSSplitViewItem] {
+		splitViewItems.filter { $0.behavior == behavior }
 	}
 
 	/// 指定したItemTypeに一致する最初のSplitViewItemを返す
-	public func firstSplitViewItem(for itemType: ItemType) -> NSSplitViewItem? {
-		splitViewItems.first { $0.behavior == itemType.behavior }
+	public func firstSplitViewItem(for behavior: NSSplitViewItem.Behavior) -> NSSplitViewItem? {
+		splitViewItems.first { $0.behavior == behavior }
 	}
 
 	/// Get the first NSSplitViewItem with a class
@@ -146,13 +157,13 @@ public class SplitViewController: NSSplitViewController {
 	
 }
 
-public class SplitView: NSSplitView {
+open class SplitView: NSSplitView {
 	
 	// setPosition(ofDividerAt:)をアニメーション対応にするカスタムプロパティアニメーション
 	// https://lists.apple.com/archives/cocoa-dev/2011/Jun/msg00453.html
 	// https://stackoverflow.com/questions/33853708/unable-to-animate-a-swift-custom-property-with-animator-osx
 	
-	public override class func defaultAnimation(forKey key: NSAnimatablePropertyKey) -> Any? {
+	open override class func defaultAnimation(forKey key: NSAnimatablePropertyKey) -> Any? {
 		if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
 			return nil
 		}
