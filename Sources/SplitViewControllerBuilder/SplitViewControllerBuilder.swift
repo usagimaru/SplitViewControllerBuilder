@@ -42,7 +42,7 @@ public extension NSSplitViewController {
 			case .sidebar:
 				let item = splitViewItemClass.init(sidebarWithViewController: viewController)
 				item.allowsFullHeightLayout = true
-				item.minimumThickness = 300
+				item.minimumThickness = 150
 				if #available(macOS 26.0, *) {
 					item.automaticallyAdjustsSafeAreaInsets = true
 				}
@@ -51,7 +51,7 @@ public extension NSSplitViewController {
 			case .contentList:
 				let item = splitViewItemClass.init(contentListWithViewController: viewController)
 				item.allowsFullHeightLayout = true
-				item.minimumThickness = 280
+				item.minimumThickness = 250
 				item.canCollapse = false
 				if #available(macOS 26.0, *) {
 					item.automaticallyAdjustsSafeAreaInsets = true
