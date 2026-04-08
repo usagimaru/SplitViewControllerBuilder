@@ -3,7 +3,9 @@
 [日本語](README_ja.md)
 
 A Swift Package for building `NSSplitViewController` layouts on macOS.
-Define sidebar, content list, content area, and inspector panes with a simple API.
+Define sidebar, content list, content area, and inspector panes through extensions on `NSSplitViewController`.
+
+<img src="screenshot.jpg" width=1000>
 
 
 ## Requirements
@@ -34,10 +36,10 @@ import SplitViewControllerBuilder
 
 ### Building a Split View Controller
 
-Create a `SplitViewController` and add panes using dedicated methods. Each method returns the `NSSplitViewItem` for further customization.
+Use the `build()` factory method and add panes with dedicated methods. Each method returns the `NSSplitViewItem` for further customization.
 
 ```swift
-let splitViewController = SplitViewController()
+let splitViewController = NSSplitViewController.build()
 
 splitViewController.addSidebar(sidebarVC)
 splitViewController.addContentList(contentListVC)
@@ -69,25 +71,19 @@ Each add method internally creates an `NSSplitViewItem` with the appropriate beh
 | `addInspector` | `.inspector` | Full-height layout |
 
 
-### Customizing Subclasses
+### Customizing Classes
 
-`SplitViewController` provides override points for the `NSSplitView` and `NSSplitViewItem` classes:
+You can pass custom `NSSplitView` and `NSSplitViewItem` subclasses:
 
 ```swift
-class MySplitViewController: SplitViewController {
-    override var splitViewClass: NSSplitView.Type {
-        MySplitView.self
-    }
-    override var splitViewItemClass: NSSplitViewItem.Type {
-        MySplitViewItem.self
-    }
-    override func configureSplitView() -> NSSplitView {
-        let sv = super.configureSplitView()
-        sv.dividerStyle = .paneSplitter
-        return sv
-    }
-}
+// Custom NSSplitView subclass
+let splitViewController = NSSplitViewController.build(splitViewClass: MySplitView.self)
+
+// Custom NSSplitViewItem subclass per pane
+splitViewController.addSidebar(sidebarVC, splitViewItemClass: MySplitViewItem.self)
 ```
+
+By default, `build()` uses `SplitView` (which provides custom animation support for divider positions) and each add method uses `SplitViewItem` (which provides custom collapse animation).
 
 
 ### Accessing Split View Items
@@ -103,7 +99,7 @@ let inspector = splitViewController.firstSplitViewItem(for: .inspector)
 let item = splitViewController.firstItemForViewControllerClass(MyViewController.self)
 
 // Type-safe access by view controller class
-let pane: SplitViewController.SplitItemInfo<MyViewController>? = splitViewController.firstPane()
+let pane: NSSplitViewController.SplitItemInfo<MyViewController>? = splitViewController.firstPane()
 ```
 
 `SplitItemInfo<T>` provides the item index, the `NSSplitViewItem`, and the typed view controller together.
@@ -111,7 +107,7 @@ let pane: SplitViewController.SplitItemInfo<MyViewController>? = splitViewContro
 
 ### Toggling Collapsed State
 
-`NSSplitViewItem` extensions provide animated collapse toggling with accessibility support:
+`NSSplitViewItem` extensions provide animated collapse toggling:
 
 ```swift
 // Toggle with animation

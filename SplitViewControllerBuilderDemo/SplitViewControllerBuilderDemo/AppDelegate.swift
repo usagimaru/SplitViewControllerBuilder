@@ -15,7 +15,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 	private var windowController: NSWindowController?
 	private var toolbarController: ToolbarController?
-	private var splitViewController: SplitViewController?
+	private var splitViewController: NSSplitViewController?
 
 	private var sidebarVC: SidebarViewController?
 	private var secondaryListVC: ContentListViewController?
@@ -26,25 +26,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 		// ---------------------------------------------
 		// Setup split view controller with custom panes
 		
-		let splitViewController = SplitViewController()
+		let splitViewController = NSSplitViewController.build()
 
 		let sidebarVC = SidebarViewController()
 		sidebarVC.delegate = self
-		self.sidebarVC = sidebarVC
-		splitViewController.addSidebar(sidebarVC)
+		self.sidebarVC = splitViewController.addSidebar(sidebarVC).viewController as? SidebarViewController
 
 		let contentListVC = ContentListViewController()
 		contentListVC.delegate = self
-		self.secondaryListVC = contentListVC
-		splitViewController.addContentList(contentListVC)
-
+		self.secondaryListVC = splitViewController.addContentList(contentListVC).viewController as? ContentListViewController
+		
 		let detailVC = DetailViewController()
-		self.detailVC = detailVC
-		splitViewController.addContentArea(detailVC)
+		self.detailVC = splitViewController.addContentArea(detailVC).viewController as? DetailViewController
 
 		let inspectorVC = InspectorViewController()
-		self.inspectorVC = inspectorVC
-		splitViewController.addInspector(inspectorVC)
+		self.inspectorVC = splitViewController.addInspector(inspectorVC).viewController as? InspectorViewController
 
 		self.splitViewController = splitViewController
 		// ---------------------------------------------

@@ -3,8 +3,9 @@
 [English](README.md)
 
 macOSの`NSSplitViewController`レイアウトを構築するSwift Packageです。
-サイドバー、コンテンツリスト、コンテンツ領域、インスペクタの各ペインをシンプルなAPIで定義できます。
+`NSSplitViewController`のextensionとして、サイドバー、コンテンツリスト、コンテンツ領域、インスペクタの各ペインを定義できます。
 
+<img src="screenshot.jpg" width=1000>
 
 ## 要件
 
@@ -34,10 +35,10 @@ import SplitViewControllerBuilder
 
 ### SplitViewControllerの構築
 
-`SplitViewController`を作成し、専用メソッドでペインを追加します。各メソッドは`NSSplitViewItem`を返すため、追加のカスタマイズが可能です。
+`build()`ファクトリメソッドでインスタンスを生成し、専用メソッドでペインを追加します。各メソッドは`NSSplitViewItem`を返すため、追加のカスタマイズが可能です。
 
 ```swift
-let splitViewController = SplitViewController()
+let splitViewController = NSSplitViewController.build()
 
 splitViewController.addSidebar(sidebarVC)
 splitViewController.addContentList(contentListVC)
@@ -69,25 +70,19 @@ splitViewController.addContentArea(detailVC).holdingPriority = .defaultLow
 | `addInspector` | `.inspector` | 全高レイアウト |
 
 
-### サブクラスのカスタマイズ
+### クラスのカスタマイズ
 
-`SplitViewController`は`NSSplitView`と`NSSplitViewItem`のクラスをオーバーライドするポイントを提供します:
+`NSSplitView`と`NSSplitViewItem`のカスタムサブクラスを渡すことができます:
 
 ```swift
-class MySplitViewController: SplitViewController {
-    override var splitViewClass: NSSplitView.Type {
-        MySplitView.self
-    }
-    override var splitViewItemClass: NSSplitViewItem.Type {
-        MySplitViewItem.self
-    }
-    override func configureSplitView() -> NSSplitView {
-        let sv = super.configureSplitView()
-        sv.dividerStyle = .paneSplitter
-        return sv
-    }
-}
+// カスタムNSSplitViewサブクラス
+let splitViewController = NSSplitViewController.build(splitViewClass: MySplitView.self)
+
+// ペインごとにカスタムNSSplitViewItemサブクラスを指定
+splitViewController.addSidebar(sidebarVC, splitViewItemClass: MySplitViewItem.self)
 ```
+
+デフォルトでは`build()`は`SplitView`（divider位置のカスタムアニメーション対応）を、各addメソッドは`SplitViewItem`（collapseのカスタムアニメーション対応）を使用します。
 
 
 ### Split View Itemへのアクセス
@@ -103,7 +98,7 @@ let inspector = splitViewController.firstSplitViewItem(for: .inspector)
 let item = splitViewController.firstItemForViewControllerClass(MyViewController.self)
 
 // View Controllerのクラスによる型安全なアクセス
-let pane: SplitViewController.SplitItemInfo<MyViewController>? = splitViewController.firstPane()
+let pane: NSSplitViewController.SplitItemInfo<MyViewController>? = splitViewController.firstPane()
 ```
 
 `SplitItemInfo<T>`はアイテムのインデックス、`NSSplitViewItem`、型付きのView Controllerをまとめて提供します。

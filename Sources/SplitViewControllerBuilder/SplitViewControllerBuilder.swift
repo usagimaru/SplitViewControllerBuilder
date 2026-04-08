@@ -1,5 +1,5 @@
 //
-//  SplitViewController.swift
+//  SplitViewControllerBuilder.swift
 //
 //  Created by usagimaru on 2024/03/09.
 //  Copyright © 2024 usagimaru.
@@ -7,56 +7,81 @@
 
 import Cocoa
 
-open class SplitViewController: NSSplitViewController {
+public extension NSSplitViewController {
 
-	public struct SplitItemInfo<T: NSViewController> {
+	struct SplitItemInfo<T: NSViewController> {
 		public let itemIndex: Int
 		public let item: NSSplitViewItem
 		public let viewController: T
 	}
 	
-	/// NSSplitViewのクラス
-	open var splitViewClass: NSSplitView.Type {
-		SplitView.self
-	}
-	
-	/// NSSplitViewItemのクラス
-	open var splitViewItemClass: NSSplitViewItem.Type {
-		SplitViewItem.self
-	}
-	
 	
 	// MARK: -
-
-	public override init(nibName nibNameOrNil: NSNib.Name?, bundle nibBundleOrNil: Bundle?) {
-		super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
-		splitView = configureSplitView()
-	}
-
-	public required init?(coder: NSCoder) {
-		fatalError("init(coder:) has not been implemented")
+	
+	static func build(splitViewClass: NSSplitView.Type = SplitView.self, items: [NSSplitViewItem] = []) -> NSSplitViewController {
+		let svc = NSSplitViewController()
+		svc.splitView = configureSplitView(class: splitViewClass)
+		svc.splitViewItems = items
+		return svc
 	}
 	
-	open func configureSplitView() -> NSSplitView {
-		let splitViewClass = self.splitViewClass
-		
-		let splitView = splitViewClass.init()
+	private static func configureSplitView(class: NSSplitView.Type) -> NSSplitView {
+		let splitView = `class`.init()
 		splitView.isVertical = true
 		splitView.dividerStyle = .thin
 		
 		return splitView
 	}
+
+	/// ItemTypeに応じたNSSplitViewItemを生成
+	private static func makeSplitViewItem(viewController: NSViewController,
+										  behavior: NSSplitViewItem.Behavior,
+										  splitViewItemClass: NSSplitViewItem.Type) -> NSSplitViewItem
+	{
+		switch behavior {
+			case .sidebar:
+				let item = splitViewItemClass.init(sidebarWithViewController: viewController)
+				item.allowsFullHeightLayout = true
+				item.minimumThickness = 300
+				if #available(macOS 26.0, *) {
+					item.automaticallyAdjustsSafeAreaInsets = true
+				}
+				return item
+
+			case .contentList:
+				let item = splitViewItemClass.init(contentListWithViewController: viewController)
+				item.allowsFullHeightLayout = true
+				item.minimumThickness = 280
+				item.canCollapse = false
+				if #available(macOS 26.0, *) {
+					item.automaticallyAdjustsSafeAreaInsets = true
+				}
+				return item
+
+			case .inspector:
+				let item = splitViewItemClass.init(inspectorWithViewController: viewController)
+				item.allowsFullHeightLayout = true
+				if #available(macOS 26.0, *) {
+					item.automaticallyAdjustsSafeAreaInsets = true
+				}
+				return item
+
+			default:
+				let item = splitViewItemClass.init(viewController: viewController)
+				return item
+		}
+	}
 	
 	@discardableResult
-	public func addSidebar(_ viewController: NSViewController) -> NSSplitViewItem {
-		let item = makeSplitViewItem(viewController: viewController, behavior: .sidebar)
+	func addSidebar(_ viewController: NSViewController, splitViewItemClass: NSSplitViewItem.Type = SplitViewItem.self) -> NSSplitViewItem {
+		let item = Self.makeSplitViewItem(viewController: viewController, behavior: .sidebar, splitViewItemClass: splitViewItemClass)
 		insertSplitViewItem(item, at: 0)
 		return item
 	}
 	
 	@discardableResult
-	public func addContentList(_ viewController: NSViewController) -> NSSplitViewItem {
-		let item = makeSplitViewItem(viewController: viewController, behavior: .contentList)
+	func addContentList(_ viewController: NSViewController, splitViewItemClass: NSSplitViewItem.Type = SplitViewItem.self) -> NSSplitViewItem {
+		let item = Self.makeSplitViewItem(viewController: viewController, behavior: .contentList, splitViewItemClass: splitViewItemClass)
 		if splitViewItems.first?.behavior == .sidebar {
 			insertSplitViewItem(item, at: 1)
 		}
@@ -67,15 +92,15 @@ open class SplitViewController: NSSplitViewController {
 	}
 	
 	@discardableResult
-	public func addInspector(_ viewController: NSViewController) -> NSSplitViewItem {
-		let item = makeSplitViewItem(viewController: viewController, behavior: .inspector)
+	func addInspector(_ viewController: NSViewController, splitViewItemClass: NSSplitViewItem.Type = SplitViewItem.self) -> NSSplitViewItem {
+		let item = Self.makeSplitViewItem(viewController: viewController, behavior: .inspector, splitViewItemClass: splitViewItemClass)
 		addSplitViewItem(item)
 		return item
 	}
 	
 	@discardableResult
-	public func addContentArea(_ viewController: NSViewController, behavior: NSSplitViewItem.Behavior = .default) -> NSSplitViewItem {
-		let item = makeSplitViewItem(viewController: viewController, behavior: behavior)
+	func addContentArea(_ viewController: NSViewController, behavior: NSSplitViewItem.Behavior = .default, splitViewItemClass: NSSplitViewItem.Type = SplitViewItem.self) -> NSSplitViewItem {
+		let item = Self.makeSplitViewItem(viewController: viewController, behavior: behavior, splitViewItemClass: splitViewItemClass)
 		// inspectorが末尾にある場合はその手前、なければ末尾に追加
 		if splitViewItems.last?.behavior == .inspector {
 			insertSplitViewItem(item, at: splitViewItems.count - 1)
@@ -85,67 +110,29 @@ open class SplitViewController: NSSplitViewController {
 		}
 		return item
 	}
-
-	/// ItemTypeに応じたNSSplitViewItemを生成
-	open func makeSplitViewItem(viewController: NSViewController, behavior: NSSplitViewItem.Behavior) -> NSSplitViewItem {
-		let itemClass = self.splitViewItemClass
-		
-		switch behavior {
-			case .sidebar:
-				let item = itemClass.init(sidebarWithViewController: viewController)
-				item.allowsFullHeightLayout = true
-				item.minimumThickness = 300
-				if #available(macOS 26.0, *) {
-					item.automaticallyAdjustsSafeAreaInsets = true
-				}
-				return item
-
-			case .contentList:
-				let item = itemClass.init(contentListWithViewController: viewController)
-				item.allowsFullHeightLayout = true
-				item.minimumThickness = 280
-				item.canCollapse = false
-				if #available(macOS 26.0, *) {
-					item.automaticallyAdjustsSafeAreaInsets = true
-				}
-				return item
-
-			case .inspector:
-				let item = itemClass.init(inspectorWithViewController: viewController)
-				item.allowsFullHeightLayout = true
-				if #available(macOS 26.0, *) {
-					item.automaticallyAdjustsSafeAreaInsets = true
-				}
-				return item
-
-			default:
-				let item = itemClass.init(viewController: viewController)
-				return item
-		}
-	}
 	
 	
 	// MARK: - Item Accessor
 
 	/// 指定したItemTypeに一致するSplitViewItemを返す
-	public func splitViewItems(for behavior: NSSplitViewItem.Behavior) -> [NSSplitViewItem] {
+	func splitViewItems(for behavior: NSSplitViewItem.Behavior) -> [NSSplitViewItem] {
 		splitViewItems.filter { $0.behavior == behavior }
 	}
 
 	/// 指定したItemTypeに一致する最初のSplitViewItemを返す
-	public func firstSplitViewItem(for behavior: NSSplitViewItem.Behavior) -> NSSplitViewItem? {
+	func firstSplitViewItem(for behavior: NSSplitViewItem.Behavior) -> NSSplitViewItem? {
 		splitViewItems.first { $0.behavior == behavior }
 	}
 
 	/// Get the first NSSplitViewItem with a class
-	public func firstItemForViewControllerClass(_ class: AnyClass) -> NSSplitViewItem? {
+	func firstItemForViewControllerClass(_ class: AnyClass) -> NSSplitViewItem? {
 		splitViewItems.first { item in
 			type(of: item.viewController) == `class`
 		}
 	}
 	
 	/// Get the first SplitItemInfo of a pane with the specific view controller type
-	public func firstPane<T: NSViewController>() -> SplitItemInfo<T>? {
+	func firstPane<T: NSViewController>() -> SplitItemInfo<T>? {
 		if let item = firstItemForViewControllerClass(T.self),
 		   let index = splitViewItems.firstIndex(of: item),
 		   let vc = item.viewController as? T
