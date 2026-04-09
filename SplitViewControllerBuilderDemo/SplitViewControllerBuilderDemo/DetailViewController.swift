@@ -25,7 +25,33 @@ class DetailViewController: NSViewController {
 	// MARK: -
 
 	override func loadView() {
-		view = NSView()
+		if #available(macOS 26.0, *) {
+			let backgroundExtensionView = NSBackgroundExtensionView()
+			backgroundExtensionView.automaticallyPlacesContentView = false
+			
+			let container = NSView()
+			container.translatesAutoresizingMaskIntoConstraints = false
+			backgroundExtensionView.contentView = container
+			view = backgroundExtensionView
+
+			// contentViewをsafe area内に手動配置
+			NSLayoutConstraint.activate([
+				container.topAnchor.constraint(equalTo: backgroundExtensionView.safeAreaLayoutGuide.topAnchor),
+				container.bottomAnchor.constraint(equalTo: backgroundExtensionView.safeAreaLayoutGuide.bottomAnchor),
+				container.leadingAnchor.constraint(equalTo: backgroundExtensionView.safeAreaLayoutGuide.leadingAnchor),
+				container.trailingAnchor.constraint(equalTo: backgroundExtensionView.safeAreaLayoutGuide.trailingAnchor),
+			])
+		}
+		else {
+			view = NSView()
+		}
+	}
+
+	private var contentContainer: NSView {
+		if #available(macOS 26.0, *), let bgView = view as? NSBackgroundExtensionView {
+			return bgView.contentView ?? view
+		}
+		return view
 	}
 
 	override func viewDidLoad() {
@@ -72,12 +98,22 @@ class DetailViewController: NSViewController {
 		separator.translatesAutoresizingMaskIntoConstraints = false
 		headerView.addSubview(separator)
 
-		view.addSubview(headerView)
+		contentContainer.addSubview(headerView)
+
+		// macOS 26: contentContainerは手動でsafe area内に配置済みのためtopAnchorを直接参照
+		// 旧OS: contentContainer = viewのためsafeAreaLayoutGuideを参照
+		let headerTopAnchor: NSLayoutYAxisAnchor
+		if #available(macOS 26.0, *), view is NSBackgroundExtensionView {
+			headerTopAnchor = contentContainer.topAnchor
+		}
+		else {
+			headerTopAnchor = contentContainer.safeAreaLayoutGuide.topAnchor
+		}
 
 		NSLayoutConstraint.activate([
-			headerView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-			headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-			headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+			headerView.topAnchor.constraint(equalTo: headerTopAnchor),
+			headerView.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
+			headerView.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor),
 
 			subjectLabel.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 16),
 			subjectLabel.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
@@ -114,13 +150,13 @@ class DetailViewController: NSViewController {
 		scrollView.documentView = textView
 		bodyTextView = textView
 
-		view.addSubview(scrollView)
+		contentContainer.addSubview(scrollView)
 
 		NSLayoutConstraint.activate([
 			scrollView.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 4),
-			scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-			scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-			scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+			scrollView.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor),
+			scrollView.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
+			scrollView.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor),
 		])
 	}
 
@@ -131,11 +167,11 @@ class DetailViewController: NSViewController {
 		placeholderLabel.alignment = .center
 		placeholderLabel.translatesAutoresizingMaskIntoConstraints = false
 
-		view.addSubview(placeholderLabel)
+		contentContainer.addSubview(placeholderLabel)
 
 		NSLayoutConstraint.activate([
-			placeholderLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-			placeholderLabel.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+			placeholderLabel.centerXAnchor.constraint(equalTo: contentContainer.centerXAnchor),
+			placeholderLabel.centerYAnchor.constraint(equalTo: contentContainer.centerYAnchor),
 		])
 	}
 

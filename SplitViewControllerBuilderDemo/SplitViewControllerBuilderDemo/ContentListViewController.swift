@@ -45,14 +45,15 @@ class ContentListViewController: NSViewController {
 
 		let subjectColumn = NSTableColumn(identifier: subjectColumnID)
 		subjectColumn.title = String(localized: "Subject")
-		subjectColumn.resizingMask = .autoresizingMask
+		subjectColumn.maxWidth = 500
+		subjectColumn.resizingMask = .userResizingMask
 
 		let dateColumn = NSTableColumn(identifier: dateColumnID)
 		dateColumn.title = String(localized: "Date")
-		dateColumn.width = 120
+		dateColumn.width = 200
 		dateColumn.minWidth = 80
-		dateColumn.maxWidth = 160
-		dateColumn.resizingMask = .autoresizingMask
+		dateColumn.maxWidth = 300
+		dateColumn.resizingMask = .userResizingMask
 
 		let tableView = NSTableView()
 		tableView.addTableColumn(subjectColumn)
@@ -60,6 +61,8 @@ class ContentListViewController: NSViewController {
 		tableView.style = .automatic
 		tableView.usesAlternatingRowBackgroundColors = true
 		tableView.allowsMultipleSelection = false
+		tableView.allowsColumnResizing = true
+		tableView.allowsColumnReordering = false
 		tableView.dataSource = self
 		tableView.delegate = self
 		tableView.rowSizeStyle = .default
@@ -68,6 +71,9 @@ class ContentListViewController: NSViewController {
 		let scrollView = NSScrollView()
 		scrollView.documentView = tableView
 		scrollView.hasVerticalScroller = true
+		scrollView.hasHorizontalRuler = true
+		scrollView.verticalScrollElasticity = .allowed
+		scrollView.horizontalScrollElasticity = .automatic
 		scrollView.automaticallyAdjustsContentInsets = true
 
 		view.addSubview(scrollView)
