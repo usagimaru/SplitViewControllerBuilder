@@ -46,9 +46,6 @@ public extension NSSplitViewController {
 				// ツールバーボタン（ラベル含む）が十分に収まる最低幅を確保しないと、閉じた時にボタンがオーバーフローしてしまう
 				item.minimumThickness = 200
 				
-				if #available(macOS 26.0, *) {
-					item.automaticallyAdjustsSafeAreaInsets = true
-				}
 				return item
 
 			case .contentList:
@@ -58,6 +55,8 @@ public extension NSSplitViewController {
 				item.minimumThickness = 250
 				
 				if #available(macOS 26.0, *) {
+					// サイドバー下に潜らせたいペインに対してtrueをセット
+					// Ref: https://developer.apple.com/jp/videos/play/wwdc2025/310/?time=302
 					item.automaticallyAdjustsSafeAreaInsets = true
 				}
 				return item
@@ -69,13 +68,15 @@ public extension NSSplitViewController {
 				// 同
 				item.minimumThickness = 200
 				
-				if #available(macOS 26.0, *) {
-					item.automaticallyAdjustsSafeAreaInsets = true
-				}
 				return item
 
 			default:
 				let item = splitViewItemClass.init(viewController: viewController)
+				
+				if #available(macOS 26.0, *) {
+					item.automaticallyAdjustsSafeAreaInsets = true
+				}
+				
 				return item
 		}
 	}

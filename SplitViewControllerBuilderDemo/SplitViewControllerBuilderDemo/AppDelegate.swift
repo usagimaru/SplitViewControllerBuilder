@@ -39,11 +39,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 		let detailVC = DetailViewController()
 		let detailItem = splitViewController.addContentArea(detailVC)
 		self.detailVC = detailItem.viewController as? DetailViewController
-		
-		// macOS 26: サイドバー/インスペクタのオーバーレイに対応
-		if #available(macOS 26.0, *) {
-			detailItem.automaticallyAdjustsSafeAreaInsets = true
-		}
 
 		let inspectorVC = InspectorViewController()
 		self.inspectorVC = splitViewController.addInspector(inspectorVC).viewController as? InspectorViewController
